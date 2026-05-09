@@ -15,7 +15,7 @@ Twilio receives WhatsApp messages and forwards them to your Flask webhook. The b
 ```bash
 git clone https://github.com/ArielSmoliar/wa-chatbot.git
 cd wa-chatbot
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
@@ -34,6 +34,7 @@ Fill in `.env`:
 | `TWILIO_AUTH_TOKEN` | [Twilio Console](https://console.twilio.com) → Account Info |
 | `TWILIO_WHATSAPP_NUMBER` | `whatsapp:+14155238886` (sandbox default) |
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `VALIDATE_TWILIO_SIGNATURE` | Set to `false` for local development, `true` for production |
 
 ### 3. Join the Twilio WhatsApp Sandbox
 
@@ -43,32 +44,37 @@ From your WhatsApp, send the following message to **+1 415 523 8886**:
 join whistle-frame
 ```
 
-You'll receive a confirmation that you've joined the sandbox.
+You will receive a confirmation that you have joined the sandbox.
 
 ### 4. Run the Flask app
 
 ```bash
-python app.py
+python3 app.py
 ```
 
-The server starts on `http://localhost:5000`.
+The server starts on `http://127.0.0.1:5000`.
 
-### 5. Expose it with ngrok
+### 5. Expose it with Cloudflare Tunnel
 
 In a separate terminal:
 
 ```bash
-ngrok http 5000
+brew install cloudflare/cloudflare/cloudflared
+cloudflared tunnel --url http://127.0.0.1:5000
 ```
 
-Copy the **Forwarding** HTTPS URL, e.g. `https://abc123.ngrok.io`.
+Copy the tunnel URL from the output, e.g. `https://your-tunnel-name.trycloudflare.com`.
+
+> **Note:** Cloudflare Tunnel is recommended over ngrok for this setup. ngrok's free and hobbyist plans intercept webhook requests before they reach Flask, causing 403 errors.
+
+> **Note:** Cloudflare generates a new URL each time you run the tunnel. You will need to update the Twilio sandbox webhook URL each session.
 
 ### 6. Configure the Twilio Sandbox webhook
 
 1. Go to [Twilio Console → Messaging → Try it out → Send a WhatsApp message](https://console.twilio.com/us1/develop/sms/try-it-out/whatsapp-learn)
-2. Under **Sandbox settings**, paste your ngrok URL into the **"When a message comes in"** field:
+2. Under **Sandbox settings**, paste your tunnel URL into the **"When a message comes in"** field:
    ```
-   https://abc123.ngrok.io/webhook
+   https://your-tunnel-name.trycloudflare.com/webhook
    ```
 3. Set the method to **HTTP POST** and save.
 
@@ -87,7 +93,7 @@ Copy the **Forwarding** HTTPS URL, e.g. `https://abc123.ngrok.io`.
 
 - Conversation history is stored **in memory** and resets when the server restarts.
 - The Twilio sandbox requires each user to join before they can exchange messages.
-- For production use, replace in-memory history with a persistent store (Redis, Postgres, etc.) and deploy to a public server instead of ngrok.
+- For production use, replace in-memory history with a persistent store (Redis, Postgres, etc.), deploy to a public server, and set `VALIDATE_TWILIO_SIGNATURE=true`.
 
 ---
 
