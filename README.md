@@ -116,6 +116,16 @@ Copy the tunnel URL from the output, e.g. `https://your-tunnel-name.trycloudflar
 
 ---
 
+## Main Learnings
+
+Two non-obvious issues worth knowing before you start:
+
+- **ngrok free and hobbyist plans block webhook traffic.** The interstitial page ngrok adds for non-browser requests intercepts Twilio webhooks before they reach your app, returning 403 with no clear error. Use Cloudflare Tunnel instead (`cloudflared tunnel --url http://127.0.0.1:5000`). It is free, requires no account, and passes all traffic through cleanly.
+
+- **Pop the user message from history if the Claude API call fails.** If you append the user message before calling Claude and the call fails, you must remove it before returning the fallback reply. Otherwise the next successful call sends a dangling user message with no preceding assistant response, which breaks the alternating user/assistant structure the API requires and causes cryptic errors.
+
+---
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
