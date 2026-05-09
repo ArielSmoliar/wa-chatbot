@@ -30,10 +30,12 @@ conversation_history: dict[str, list[dict]] = {}
 def require_twilio_signature(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        validator = RequestValidator(os.environ["TWILIO_AUTH_TOKEN"])
-        signature = request.headers.get("X-Twilio-Signature", "")
-        if not validator.validate(request.url, request.form, signature):
-            abort(403)
+        validate = os.environ.get("VALIDATE_TWILIO_SIGNATURE", "true").strip().lower() == "true"
+        if validate:
+            validator = RequestValidator(os.environ["TWILIO_AUTH_TOKEN"])
+            signature = request.headers.get("X-Twilio-Signature", "")
+            if not validator.validate(request.url, request.form, signature):
+                abort(403)
         return f(*args, **kwargs)
     return decorated
 
