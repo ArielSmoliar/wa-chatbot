@@ -6,6 +6,25 @@ A WhatsApp bot built with Python, Flask, Twilio, and Claude (claude-sonnet-4-6).
 
 Twilio receives WhatsApp messages and forwards them to your Flask webhook. The bot maintains per-conversation history in memory, sends it to Claude, and replies via Twilio.
 
+```mermaid
+sequenceDiagram
+    participant User as User (WhatsApp)
+    participant Twilio as Twilio Sandbox
+    participant CF as Cloudflare Tunnel
+    participant Flask as Flask (localhost:5000)
+    participant Claude as Anthropic Claude API
+
+    User->>Twilio: Sends WhatsApp message
+    Twilio->>CF: POST /webhook (form data)
+    CF->>Flask: Forwards request
+    Flask->>Flask: Parse sender + message,<br/>append to conversation history
+    Flask->>Claude: Send conversation history
+    Claude->>Flask: Return reply
+    Flask->>Flask: Append reply to history
+    Flask->>Twilio: Send reply via REST API
+    Twilio->>User: Delivers WhatsApp message
+```
+
 ---
 
 ## Setup
